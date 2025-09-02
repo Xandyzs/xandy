@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Pena - Hollywood</title>
+    <meta name="description" content="Calculadora de penas, multas e fianças do Código Penal da Hollywood.">
+    <meta name="author" content="Ministro Sauhan">
+    <style>
+        :root {
+            --primary-color: #0056b3;
+            --primary-hover-color: #004494;
+            --secondary-color: #6c757d;
+            --secondary-hover-color: #5a6268;
+            --background-color: #f4f4f4;
+            --container-bg-color: #ffffff;
+            --text-color: #333;
+            --border-color: #dddddd;
+            --results-bg-color: #e9ecef;
+            --danger-color: #a42626;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            margin: 0;
+            min-height: 100vh;
+        }
+        .container {
+            background: var(--container-bg-color);
+            padding: 25px 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 700px;
+        }
+        h1, h2, h3, h4 {
+            text-align: center;
+            color: var(--text-color);
+            margin-bottom: 0.5em;
+        }
+        h1 { font-size: 2em; }
+        h2 {
+            font-size: 1.5em;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 20px;
+        }
+        h3 { font-size: 1.2em; }
+        h4 { 
+            font-size: 1em;
+            text-align: left;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        .form-group { margin-bottom: 20px; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        #searchInput {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        #crime-list {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .crime-item label {
+            font-weight: normal;
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 8px;
+            cursor: pointer;
+            flex-wrap: wrap;
+        }
+        .crime-item input {
+            margin-right: 10px;
+            min-width: 16px;
+            min-height: 16px;
+            margin-top: 3px;
+        }
+        .crime-details {
+            font-size: 0.8em;
+            color: #666;
+            margin-left: 5px;
+            font-style: italic;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            font-weight: normal;
+            cursor: pointer;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .button-group button {
+            width: 100%;
+            padding: 12px;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            flex-grow: 1;
+        }
+        .button-group .primary {
+             background-color: var(--primary-color);
+        }
+        .button-group .primary:hover {
+             background-color: var(--primary-hover-color);
+        }
+        .button-group .secondary {
+             background-color: var(--secondary-color);
+        }
+        .button-group .secondary:hover {
+             background-color: var(--secondary-hover-color);
+        }
+        #results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--results-bg-color);
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+        }
+        ul {
+            padding-left: 0;
+            margin-top: 5px;
+            list-style-type: none;
+        }
+        ul li { margin-bottom: 5px; padding-left: 15px; text-indent: -15px;}
+        ul li::before { content: '• '; color: var(--primary-color); }
+        hr {
+            border: none;
+            border-top: 1px solid #ccc;
+            margin: 20px 0;
+        }
+        .final-bail {
+            text-align: center;
+            font-size: 1.1em;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #fff;
+        }
+        .final-bail.inafiancavel {
+            color: var(--danger-color);
+            font-weight: bold;
+            border-color: var(--danger-color);
+        }
+        .citation {
+            font-size: 0.7em;
+            color: #6c757d;
+            text-align: center;
+            display: block;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Calculadora Penal - Hollywood</h1>
+        <p style="text-align: center; margin-top:-10px; margin-bottom: 20px;">Código Penal da Hollywood</p>
+
+        <div class="form-group">
+            <label for="searchInput">Buscar Crime:</label>
+            <input type="text" id="searchInput" onkeyup="filterCrimes()" placeholder="Digite o nome do crime para filtrar...">
+            <div id="crime-list">
+                </div>
+        </div>
+
+        <div class="form-group">
+            <h2>Atenuantes</h2>
+            <div class="checkbox-group">
+                <label><input type="checkbox" id="miranda"> Omissão do Aviso de Miranda (Redução de 30%)</label>
+                <label><input type="checkbox" id="advogado"> Assistência Jurídica (Advogado) (Redução de 30%)</label>
+                <label><input type="checkbox" id="reuPrimario"> Réu Primário (Redução de 30%)</label>
+                <label><input type="checkbox" id="confissao"> Confissão do Crime (Redução de 10%)</label>
+                <label><input type="checkbox" id="colaboracao"> Colaboração com o Processo (Redução de 10%)</label>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button type="button" class="secondary" onclick="clearSelection()">Limpar Seleção e Resultados</button>
+            <button type="button" class="primary" onclick="calculatePenalty()">Calcular Pena Final</button>
+        </div>
+
+        <div id="results">
+            <h3>Resultado</h3>
+            <p>Selecione um ou mais crimes e os atenuantes aplicáveis, depois clique em calcular.</p>
+        </div>
+        <p class="citation">A redução máxima da pena por atenuantes é de 50%. Fiança quitada isenta da pena de prisão.</p>
+    </div>
+
+<script>
+    // LISTA DE CRIMES COM FIANÇAS ATUALIZADAS
+    const crimes = [
+        { name: "Art. 4 - Atropelamento Culposo", sentence: 10, fine: "R$7.000", bail: "Inafiançável" },
+        { name: "Art. 5 - Atropelamento Doloso", sentence: 20, fine: "R$9.000", bail: "Inafiançável" },
+        { name: "Art. 6 - Atropelamento Coletivo", sentence: 35, fine: "R$15.000", bail: "Inafiançável" },
+        { name: "Art. 9 - Cometer Crime com Veículo Público", sentence: 20, fine: "R$5.000", bail: 100000 },
+        { name: "Art. 10 - Poluição Sonora", sentence: 10, fine: "R$5.000", bail: 25000 },
+        { name: "Art. 11 - Direção Perigosa", sentence: 15, fine: "R$5.000", bail: 26000 },
+        { name: "Art. 12 - Tentativa de Homicídio", sentence: 50, fine: "R$7.500", bail: "Inafiançável" },
+        { name: "Art. 13 - Homicídio Doloso", sentence: 60, fine: "R$10.000", bail: "Inafiançável" },
+        { name: "Art. 14 - Homicídio Culposo", sentence: 40, fine: "R$7.000", bail: "Inafiançável" },
+        { name: "Art. 15 - Homicídio a Servidor Público", sentence: 100, fine: "R$15.000", bail: "Inafiançável" },
+        { name: "Art. 16 - Latrocínio", sentence: 20000, fine: "R$10.000", bail: "Inafiançável" },
+        { name: "Art. 17 - Crimes de Agressão ou Lesão Corporal", sentence: 15, fine: "R$5.000", bail: 35000 },
+        { name: "Art. 18 - Causar Incêndio ou Explosão", sentence: 30, fine: "R$7.500", bail: "Inafiançável" },
+        { name: "Art. 19 - Tentativa de Sequestro", sentence: 30, fine: "R$5.000", bail: 70000 },
+        { name: "Art. 20 - Sequestro", sentence: 50, fine: "R$10.000", bail: "Inafiançável" },
+        { name: "Art. 21 - Violência contra Animais", sentence: 15, fine: "R$5.000", bail: 50000 },
+        { name: "Art. 22 - Omissão de socorro", sentence: 30, fine: "R$5.000", bail: "Inafiançável" },
+        { name: "Art. 23 - Abandono de Incapaz", sentence: 40, fine: "R$50.000", bail: "Inafiançável" },
+        { name: "Art. 24 - Maus Tratos", sentence: 40, fine: "R$50.000", bail: "Inafiançável" },
+        { name: "Art. 25 - Calúnia", sentence: 20, fine: "R$5.000", bail: 40000 },
+        { name: "Art. 26 - Difamação", sentence: 20, fine: "R$10.000", bail: 40000 },
+        { name: "Art. 27 - Injúria", sentence: 20, fine: "R$10.000", bail: 40000 },
+        { name: "Art. 28 - Injúria Real", sentence: 20, fine: "R$15.000", bail: 80000 },
+        { name: "Art. 29 - Atentado ao Pudor", sentence: 20, fine: "R$7.500", bail: 25000 },
+        { name: "Art. 30 - Assédio", sentence: 50, fine: "R$10.000", bail: 50000 },
+        { name: "Art. 31 - Ameaça", sentence: 50, fine: "R$2.500", bail: 25000 },
+        { name: "Art. 32 - Uso Indevido da Imagem", sentence: 15, fine: "R$5.000", bail: 32000 },
+        { name: "Art. 34 - Direitos Autorais", sentence: 15, fine: "R$5.000", bail: 48000 },
+        { name: "Art. 35 - Furto", sentence: 15, fine: "R$7.500", bail: 22000 },
+        { name: "Art. 36 - Roubo a Mão Armada", sentence: 40, fine: "R$10.000", bail: "Inafiançável" },
+        { name: "Art. 37 - Roubo de Automotores", sentence: 30, fine: "R$12.500", bail: 90000 },
+        { name: "Art. 38 - Extorsão", sentence: 40, fine: "R$7.500", bail: "Inafiançável" },
+        { name: "Art. 39 - Dano ao Patrimônio Privado", sentence: 10, fine: "R$5.000", bail: 9500 },
+        { name: "Art. 40 - Dano ao Patrimônio Público", sentence: 10, fine: "R$7.500", bail: 10000 },
+        { name: "Art. 41 - Invasão a Propriedade", sentence: 25, fine: "R$2.500", bail: 10000 },
+        { name: "Art. 42 - Estelionato", sentence: 40, fine: "R$10.000", bail: 30000 },
+        { name: "Art. 43 - Incitar a Prática de Crime", sentence: 20, fine: "R$2.000", bail: 20000 },
+        { name: "Art. 44 - Associação Criminosa", sentence: 20, fine: "R$5.000", bail: 30000 },
+        { name: "Art. 45 - Formação de Quadrilha", sentence: 50, fine: "R$15.000", bail: 50000 },
+        { name: "Art. 47 - Produção de Drogas", sentence: 100, fine: "R$25.000", bail: "Inafiançável" },
+        { name: "Art. 48 - Posse de drogas", sentence: 10, fine: "R$5.000", bail: 50000 },
+        { name: "Art. 49 - Tráfico de drogas", sentence: 30, fine: "R$7.500", bail: 70000 },
+        { name: "Art. 50 - Posse ilegal de munições leves", sentence: 5, fine: "R$3.000", bail: 10000 },
+        { name: "Art. 51 - Posse ilegal de munições média", sentence: 15, fine: "R$5.000", bail: 15000 },
+        { name: "Art. 52 - Posse ilegal de munições pesadas", sentence: 25, fine: "R$7.500", bail: 20000 },
+        { name: "Art. 53 - Porte ilegal de armas Leves", sentence: 30, fine: "R$5.000", bail: "Inafiançável" },
+        { name: "Art. 54 - Porte ilegal de armas Medias", sentence: 40, fine: "R$7.500", bail: "Inafiançável" },
+        { name: "Art. 55 - Porte ilegal de armas pesadas", sentence: 50, fine: "R$10.000", bail: "Inafiançável" },
+        { name: "Art. 56 - Tráfico de arma leve", sentence: 25, fine: "R$10.000", bail: "Inafiançável" },
+        { name: "Art. 57 - Tráfico de arma media", sentence: 35, fine: "R$15.000", bail: "Inafiançável" },
+        { name: "Art. 58 - Tráfico de arma pesada", sentence: 45, fine: "R$20.000", bail: "Inafiançável" },
+        { name: "Art. 59 - Tráfico ilegal de munições leves", sentence: 10, fine: "R$5.000", bail: 35000 },
+        { name: "Art. 60 - Tráfico ilegal de munições medias", sentence: 20, fine: "R$7.500", bail: 85000 },
+        { name: "Art. 61 - Tráfico ilegal de munições pesadas", sentence: 40, fine: "R$1.000", bail: "Inafiançável" },
+        { name: "Art. 62 - Equipamento Balístico", sentence: 15, fine: "R$5.000", bail: 20000 },
+        { name: "Art. 63 - Posse de Dinheiro Sujo", sentence: 15, fine: "R$5.000", bail: "Inafiançável" },
+        { name: "Art. 64 - Ocultação Facial", sentence: 15, fine: "R$3.000", bail: 20000 },
+        { name: "Art. 65 - Obstrução Facial", sentence: 35, fine: "R$25.000", bail: 20000 },
+        { name: "Art. 66 - Posse de Coldre", sentence: 15, fine: "R$5.000", bail: 20000 },
+        { name: "Art. 67 - Posse de Algema", sentence: 10, fine: "R$5.000", bail: 15000 },
+        { name: "Art. 68 - Logs/Keys de Banco", sentence: 10, fine: "R$5.000", bail: 70000 },
+        { name: "Art. 69 - Posse de Lockpick", sentence: 10, fine: "R$5.000", bail: 20000 },
+        { name: "Art. 70 - Posse de Capuz", sentence: 10, fine: "R$5.000", bail: 10000 },
+        { name: "Art. 71 - Placa Clonada", sentence: 10, fine: "R$5.000", bail: 40000 },
+        { name: "Art. 72 - Lavagem de Dinheiro", sentence: 100, fine: "R$100.000", bail: "Inafiançável" },
+        { name: "Art. 73 - Posse de Subprodutos ilícitos", sentence: 10, fine: "R$5.000", bail: 60000 },
+        { name: "Art. 74 - Posse de Pólvora", sentence: 15, fine: "R$5.000", bail: 20000 },
+        { name: "Art. 75 - Posse de C4", sentence: 20, fine: "R$5.000", bail: 40000 },
+        { name: "Art. 76 - Uso indevido do Porte de Arma", sentence: 15, fine: "R$10.000", bail: 50000 },
+        { name: "Art. 77 - Uso indevido de Arma de Choque ou Branca", sentence: 10, fine: "R$10.000", bail: "Inafiançável" },
+        { name: "Art. 78 - Fuga da Abordagem", sentence: 10, fine: "R$5.000", bail: 50000 },
+        { name: "Art. 79 - Perturbação da Ordem Pública", sentence: 10, fine: "R$10.000", bail: 20000 },
+        { name: "Art. 80 - Falsidade ideológica", sentence: 25, fine: "R$10.000", bail: 50000 },
+        { name: "Art. 81 - Exercício ilegal da profissão", sentence: 20, fine: "R$10.000", bail: 40000 },
+        { name: "Art. 82 - Exercer atividade da qual está proibido", sentence: 40, fine: "R$15.000", bail: 60000 },
+        { name: "Art. 83 - Abandono de Função", sentence: 30, fine: "R$15.000", bail: "Inafiançável" },
+        { name: "Art. 84 - Desobediência a autoridade", sentence: 15, fine: "R$5.000", bail: 60000 },
+        { name: "Art. 85 - Desacato leve", sentence: 50, fine: "R$10.000", bail: "Inafiançável" },
+        { name: "Art. 85.2 - Desacato medio", sentence: 150, fine: "R$10.000", bail: "Inafiançável" },
+        { name: "Art. 85.3 - Desacato Pesado", sentence: 250, fine: "R$10.000", bail: "Inafiançável" },
+        { name: "Art. 86 - Tentativa de Suborno", sentence: 45, fine: "R$20.000", bail: 80000 },
+        { name: "Art. 87 - Corrupção", sentence: 200, fine: "R$50.000", bail: "Inafiançável" },
+        { name: "Art. 88 - Suborno", sentence: 55, fine: "R$25.000", bail: 120000 },
+        { name: "Art. 89 - Fraudar Informações", sentence: 45, fine: "R$15.000", bail: 70000 },
+        { name: "Art. 90 - Prevaricação", sentence: 50, fine: "R$10.000", bail: 70000 },
+        { name: "Art. 91 - Obstrução da Justiça", sentence: 50, fine: "R$15.000", bail: 60000 },
+        { name: "Art. 92 - Abuso de Autoridade", sentence: 50, fine: "R$15.000", bail: "Inafiançável" },
+        { name: "Art. 93 - Perjurio, Falso Testemunho", sentence: 15, fine: "R$5.000", bail: 0 },
+        { name: "Art. 94 - Iniciar investigação em um indivíduo sabendo que o mesmo é inocente", sentence: 25, fine: "R$20.000", bail: "Inafiançável" },
+        { name: "Art. 95 - Denunciação Caluniosa", sentence: 55, fine: "R$25.000", bail: 75000 },
+        { name: "Art. 96 - Banco Central", sentence: 100, fine: "R$10.000", bail: "Inafiançável" },
+        { name: "Art. 97 - Joalheria", sentence: 70, fine: "R$7.500", bail: "Inafiançável" },
+        { name: "Art. 98 - Banco Fleeca", sentence: 80, fine: "R$8.500", bail: "Inafiançável" },
+        { name: "Art. 99 - Banco Paleto", sentence: 100, fine: "R$10.000", bail: "Inafiançável" },
+        { name: "Art. 100 - Nióbio", sentence: 120, fine: "R$12.000", bail: "Inafiançável" },
+        { name: "Art. 101 - Açougue", sentence: 50, fine: "R$7.500", bail: "Inafiançável" },
+        { name: "Art. 102 - Galinheiro", sentence: 50, fine: "R$7.500", bail: "Inafiançável" },
+        { name: "Art. 103 - Caixas Registradoras", sentence: 10, fine: "R$5.000", bail: 0 },
+        { name: "Art. 104 - Loja de Departamento", sentence: 30, fine: "R$7.500", bail: "Inafiançável" },
+        { name: "Art. 105 - Loja de armas (Ammunation)", sentence: 20, fine: "R$7.500", bail: "Inafiançável" },
+        { name: "Art. 106 - Caixa Eletrônico (ATM)", sentence: 20, fine: "R$5.000", bail: 0 },
+        { name: "Art. 107 - Barbearia", sentence: 15, fine: "R$5.000", bail: "Inafiançável" },
+        { name: "Art. 108 - Yellow Jack", sentence: 50, fine: "R$5.000", bail: "Inafiançável" },
+        { name: "Art. 109 - Corrida Ilegal", sentence: 20, fine: "R$5.000", bail: "Inafiançável" },
+        { name: "Art. 110 - Roubo a Porta-Malas", sentence: 20, fine: "R$15.000", bail: "Inafiançável" },
+        { name: "Art. 111 - Roubo a Loja de Bebidas", sentence: 20, fine: "R$15.000", bail: "Inafiançável" },
+        { name: "Art. 112 - Roubo a Comedy", sentence: 40, fine: "R$15.000", bail: "Inafiançável" },
+        { name: "Art. 113 - Roubo a Planet", sentence: 40, fine: "R$15.000", bail: "Inafiançável" },
+        { name: "Art. 114 - Roubo a Observatório", sentence: 20, fine: "R$15.000", bail: "Inafiançável" },
+        { name: "Art. 118 - Roubo a Delegacia", sentence: 20, fine: "R$15.000", bail: "Inafiançável" },
+        { name: "Art. 119 - Roubo a Grapeseed", sentence: 20, fine: "R$15.000", bail: "Inafiançável" },
+        { name: "Art. 120 - Roubo a Aeroporto Abandonado", sentence: 20, fine: "R$15.000", bail: "Inafiançável" },
+        { name: "Art. 121 - Roubo a Carro Forte", sentence: 20, fine: "R$15.000", bail: "Inafiançável" },
+        { name: "Art. 122 - Roubo a Laboratório Humane", sentence: 20, fine: "R$15.000", bail: "Inafiançável" },
+        { name: "Art. 123 - Roubo a Trevor", sentence: 20, fine: "R$15.000", bail: "Inafiançável" },
+        { name: "Art. 124 - Roubo a Cypress", sentence: 20, fine: "R$15.000", bail: "Inafiançável" }
+    ];
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const crimeListDiv = document.getElementById('crime-list');
+        // A lista já está ordenada no array, então não precisamos do sort aqui.
+        crimes.forEach((crime, index) => {
+            const crimeDiv = document.createElement('div');
+            crimeDiv.className = 'crime-item';
+            
+            const label = document.createElement('label');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = index;
+
+            const crimeName = document.createElement('div');
+            crimeName.textContent = crime.name;
+            
+            const crimeDetails = document.createElement('span');
+            crimeDetails.className = 'crime-details';
+            crimeDetails.textContent = `(${crime.sentence} meses | Multa: ${crime.fine})`;
+
+            label.appendChild(checkbox);
+            
+            const textContainer = document.createElement('div');
+            textContainer.appendChild(crimeName);
+            textContainer.appendChild(crimeDetails);
+            
+            label.appendChild(textContainer);
+            crimeDiv.appendChild(label);
+            crimeListDiv.appendChild(crimeDiv);
+        });
+    });
+
+    function filterCrimes() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const crimeItems = document.querySelectorAll('.crime-item');
+        crimeItems.forEach(item => {
+            const label = item.querySelector('label').textContent.toLowerCase();
+            if (label.includes(searchTerm)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+    }
+    
+    function clearSelection() {
+        document.getElementById('searchInput').value = '';
+        filterCrimes(); 
+
+        document.querySelectorAll('#crime-list input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+
+        document.querySelectorAll('.checkbox-group input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = "<h3>Resultado</h3><p>Selecione um ou mais crimes e os atenuantes aplicáveis, depois clique em calcular.</p>";
+    }
+
+    function calculatePenalty() {
+        const resultsDiv = document.getElementById('results');
+        let totalSentence = 0;
+        let totalBail = 0;
+        let isNonBailable = false;
+        const selectedCrimesInfo = [];
+        const bailableCrimes = [];
+        const nonBailableCrimes = [];
+
+        const crimeCheckboxes = document.querySelectorAll('#crime-list input[type="checkbox"]');
+        crimeCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                const crimeIndex = parseInt(checkbox.value);
+                const crime = crimes[crimeIndex];
+                
+                totalSentence += crime.sentence;
+                selectedCrimesInfo.push({ name: crime.name, fine: crime.fine });
+
+                if (crime.bail === "Inafiançável") {
+                    isNonBailable = true;
+                    nonBailableCrimes.push(crime.name);
+                } else if (typeof crime.bail === 'number' && crime.bail > 0) {
+                    totalBail += crime.bail;
+                    bailableCrimes.push({ name: crime.name, amount: crime.bail });
+                }
+            }
+        });
+
+        if (totalSentence === 0) {
+            resultsDiv.innerHTML = "<h3>Resultado</h3><p>Por favor, selecione pelo menos um crime.</p>";
+            return;
+        }
+
+        let totalReduction = 0;
+        if (document.getElementById('miranda').checked) { totalReduction += 30; }
+        if (document.getElementById('advogado').checked) { totalReduction += 30; }
+        if (document.getElementById('reuPrimario').checked) { totalReduction += 30; }
+        if (document.getElementById('confissao').checked) { totalReduction += 10; }
+        if (document.getElementById('colaboracao').checked) { totalReduction += 10; }
+        
+        const cappedReduction = Math.min(totalReduction, 50);
+        const finalSentence = totalSentence * (1 - (cappedReduction / 100));
+
+        let crimesHtml = '<h3>Crimes e Multas</h3><ul>';
+        selectedCrimesInfo.forEach(crime => {
+            crimesHtml += `<li>${crime.name} — <strong>Multa:</strong> ${crime.fine}</li>`;
+        });
+        crimesHtml += '</ul>';
+
+        let bailHtml = '<hr><h3>Fiança</h3>';
+        if (nonBailableCrimes.length > 0) {
+            bailHtml += '<h4>Crimes Inafiançáveis:</h4><ul>';
+            nonBailableCrimes.forEach(name => {
+                bailHtml += `<li>${name}</li>`;
+            });
+            bailHtml += '</ul>';
+        }
+        if (bailableCrimes.length > 0) {
+            bailHtml += '<h4>Crimes Afiançáveis:</h4><ul>';
+            bailableCrimes.forEach(crime => {
+                bailHtml += `<li>${crime.name} — ${formatCurrency(crime.amount)}</li>`;
+            });
+            bailHtml += '</ul>';
+        }
+
+        if (bailableCrimes.length === 0 && nonBailableCrimes.length === 0) {
+             bailHtml += '<p style="text-align:center;">Nenhum crime selecionado possui fiança especificada.</p>';
+        }
+
+        bailHtml += '<hr style="margin: 15px 0 10px 0;">'
+        if (isNonBailable) {
+            bailHtml += `<div class="final-bail inafiancavel">STATUS FINAL: INAFIANÇÁVEL</div>`;
+        } else {
+            bailHtml += `<div class="final-bail"><strong>VALOR TOTAL DA FIANÇA: ${formatCurrency(totalBail)}</strong></div>`;
+        }
+        
+        let sentenceHtml = `
+            <hr><h3>Cálculo da Pena</h3>
+            <p style="text-align:center;"><strong>Pena Base Total (soma):</strong> ${totalSentence} meses</p>
+            <p style="text-align:center;"><strong>Redução (soma dos atenuantes):</strong> ${totalReduction}%</p>
+            <p style="text-align:center;"><strong>Redução Aplicada (teto de 50%):</strong> ${cappedReduction}%</p>
+            <hr>
+            <p style="text-align:center; font-size: 1.2em;"><strong>PENA FINAL: ${finalSentence.toFixed(1).replace('.',',')} meses de prisão</strong></p>
+        `;
+
+        resultsDiv.innerHTML = crimesHtml + bailHtml + sentenceHtml;
+    }
+</script>
+
+</body>
+</html>
